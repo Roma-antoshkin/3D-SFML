@@ -13,6 +13,7 @@ struct elips {
     vec3 mas;
     vec3 rot;
 };
+uniform elips elp;
 
 float mod(vec3 v) {
     return sqrt(dot(v, v));
@@ -41,10 +42,10 @@ void main() {
     vec2 cd = (gl_FragCoord.xy*2.f / u_resolution) - vec2(1.f, 1.f);
     float k = u_resolution.x / u_resolution.y;
 
-    elips elp;
-    elp.coord = vec3(0, 0, 0);
-    elp.mas = vec3(100, 100, 100);
-    elp.rot = vec3(0, 0, 0);
+    // elips elp;
+    // elp.coord = vec3(0, 0, 0);
+    // elp.mas = vec3(100, 100, 100);
+    // elp.rot = vec3(0, 0, 0);
 
     vec3 v = normalize(vec3(cd.x*k, cd.y, 1));
 

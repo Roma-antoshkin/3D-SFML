@@ -11,27 +11,47 @@ const float MAX_DIST = 10000.f;
 struct elips {
     vec3 coord;
     vec3 mas;
-    vec3 rot;
+    mat3 rot;
+    mat3 unrot;
 };
 uniform elips elp;
+
+// mat3 rotateMatrix(vec3 r) {
+//     return mat3(
+//         cos(r.z), -sin(r.z), 0.f,
+//         sin(r.z), cos(r.z), 0.f,
+//         0.f, 0.f, 1.f
+//     ) * mat3(
+//         cos(r.y), 0.f, sin(r.y),
+//         0.f, 1.f, 0.f,
+//         -sin(r.y), 0, cos(r.y)
+//     ) * mat3(
+//         1.f, 0.f, 0.f, 
+//         0.f, cos(r.x), -sin(r.x),
+//         0.f, sin(r.x), cos(r.x)
+//     );
+// }
 
 float mod(vec3 v) {
     return sqrt(dot(v, v));
 }
 
-vec4 insec(vec3 cam, vec3 vec, elips elp) {
-    vec3 m = cam - elp.coord;
+// Пересечение с эллипсоидом
+vec4 insecElips(vec3 m, vec3 v, elips elp) {
+    m = m - elp.coord;
+    m = elp.unrot*m;
+    v = elp.unrot*v;
 
     m /= elp.mas;
-    vec3 v = normalize(vec/elp.mas);
+    v = normalize(v/elp.mas);
     float h = dot(-m, v);
     float d = mod(m + h*v);
     if (d > 1.) return vec4(0, 0, 0, MAX_DIST + 1.f); 
     float s = sqrt(1 - d*d);
     if (mod(m) <= 1)
-        return vec4(normalize(-(m + (h + s)*v)/elp.mas), 
+        return vec4(normalize(elp.rot*(-(m + (h + s)*v)/elp.mas)), 
                                  mod(v*(h + s)*elp.mas));
-    return vec4(normalize((m + (h - s)*v)/elp.mas), mod(v*(h - s)*elp.mas));
+    return vec4(normalize(elp.rot*((m + (h - s)*v)/elp.mas)), mod(v*(h - s)*elp.mas));
 }
 
 float lightRef(vec3 v, vec3 n) {
@@ -49,7 +69,7 @@ void main() {
 
     vec3 v = normalize(vec3(cd.x*k, cd.y, 1));
 
-    vec4 ins = insec(cam, v, elp);
+    vec4 ins = insecElips(cam, v, elp);
     if (ins.w < MAX_DIST) gl_FragColor = vec4(vec3(lightRef(v, ins.xyz)), 1.f);
     else gl_FragColor = vec4(0, 0, 0.1, 1);
 }

@@ -1,17 +1,59 @@
 #include <SFML/Graphics.hpp>
+#include <cmath>
 using namespace std;
 
 #include "Constants.h"
 
 struct Elips {
-    sf::Vector3f coord, mas, rot;
+private:
+    sf::Transform rot, unrot;
+public:
+    sf::Vector3f coord, mas;
+
     Elips(): coord(), mas(1., 1., 1.), rot() {}
-    Elips(sf::Vector3f cd, sf::Vector3f ms, sf::Vector3f rt): 
-        coord(cd), mas(ms), rot(rt) {}
+    Elips(sf::Vector3f cd, sf::Vector3f ms, sf::Vector3f rt)
+        :coord(cd), mas(ms) {
+        rot = rotateMatrix(rt);
+        unrot = unRotateMatrix(-rt);
+    }
+    
+    sf::Transform rotateMatrix(sf::Vector3f r) {
+        return sf::Transform(
+            cos(r.z), -sin(r.z), 0.f,
+            sin(r.z), cos(r.z), 0.f,
+            0.f, 0.f, 1.f
+        ) * sf::Transform(
+            cos(r.y), 0.f, sin(r.y),
+            0.f, 1.f, 0.f,
+            -sin(r.y), 0, cos(r.y)
+        ) * sf::Transform(
+            1.f, 0.f, 0.f, 
+            0.f, cos(r.x), -sin(r.x),
+            0.f, sin(r.x), cos(r.x)
+        );
+    }
+
+    sf::Transform unRotateMatrix(sf::Vector3f r) {
+        return sf::Transform(
+            1.f, 0.f, 0.f, 
+            0.f, cos(r.x), -sin(r.x),
+            0.f, sin(r.x), cos(r.x)
+        ) * sf::Transform(
+            cos(r.y), 0.f, sin(r.y),
+            0.f, 1.f, 0.f,
+            -sin(r.y), 0, cos(r.y)
+        ) * sf::Transform(
+            cos(r.z), -sin(r.z), 0.f,
+            sin(r.z), cos(r.z), 0.f,
+            0.f, 0.f, 1.f
+        );
+    }
+
     void setInShader(sf::Shader* shader, const string name) {
         shader->setUniform(name+".coord", coord);
         shader->setUniform(name+".mas", mas);
-        shader->setUniform(name+".rot", rot);
+        shader->setUniform(name+".rot", sf::Glsl::Mat3(rot));
+        shader->setUniform(name+".unrot", sf::Glsl::Mat3(unrot));
     }
 };
 
@@ -36,8 +78,8 @@ int main() {
     // shader.setUniform("texture1", city);
     Elips elp(
         sf::Vector3f(0., 0., 0.),
-        sf::Vector3f(100., 100., 100.),
-        sf::Vector3f(0., 0., 0.)
+        sf::Vector3f(150., 100., 100.),
+        sf::Vector3f(0., 0., 1.)
     );
     elp.setInShader(&shader, "elp");
 

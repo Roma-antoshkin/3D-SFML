@@ -4,6 +4,9 @@
 // D
 // e
 // f
+// A
+// B
+// C
 int main() {
     sf::RenderWindow window(sf::VideoMode(WIDTH, HEIGHT), "Title");
     sf::Shader shader;

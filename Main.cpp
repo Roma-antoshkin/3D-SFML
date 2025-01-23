@@ -1,7 +1,9 @@
 #include <SFML/Graphics.hpp>
-
+// g
 #include "Constants.h"
-
+// D
+// e
+// f
 int main() {
     sf::RenderWindow window(sf::VideoMode(WIDTH, HEIGHT), "Title");
     sf::Shader shader;

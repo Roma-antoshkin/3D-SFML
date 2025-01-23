@@ -4,6 +4,7 @@
 
 int main() {
     sf::RenderWindow window(sf::VideoMode(WIDTH, HEIGHT), "Title");
+    window.setFramerateLimit(60);
     sf::Shader shader;
     sf::Clock clock;
 

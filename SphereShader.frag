@@ -17,18 +17,18 @@ struct elips {
 uniform elips elp;
 
 // mat3 rotateMatrix(vec3 r) {
-//     return mat3(
-//         cos(r.z), -sin(r.z), 0.f,
-//         sin(r.z), cos(r.z), 0.f,
-//         0.f, 0.f, 1.f
+//     mat3(
+//         1.f, 0.f, 0.f, 
+//         0.f, cos(r.x), -sin(r.x),
+//         0.f, sin(r.x), cos(r.x)
 //     ) * mat3(
 //         cos(r.y), 0.f, sin(r.y),
 //         0.f, 1.f, 0.f,
 //         -sin(r.y), 0, cos(r.y)
-//     ) * mat3(
-//         1.f, 0.f, 0.f, 
-//         0.f, cos(r.x), -sin(r.x),
-//         0.f, sin(r.x), cos(r.x)
+//     ) * return mat3(
+//         cos(r.z), -sin(r.z), 0.f,
+//         sin(r.z), cos(r.z), 0.f,
+//         0.f, 0.f, 1.f
 //     );
 // }
 

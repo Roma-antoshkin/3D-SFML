@@ -79,6 +79,13 @@ public:
     }
 };
 
+class Camera : public Objekt3D {
+public:
+    Camera(): Objekt3D() {}
+    Camera(sf::Vector3f cd, sf::Vector3f rt)
+        :Objekt3D(cd, rt) {}
+};
+
 class Elips : public SizedObjekt3D {
 public:
     Elips(): SizedObjekt3D() {}
@@ -122,12 +129,16 @@ int main() {
     // shader.setUniform("texture1", city);
     Elips elp(
         sf::Vector3f(0., 0., 0.),
-        sf::Vector3f(150., 100., 80.),
+        sf::Vector3f(80., 150., 100.),
         sf::Vector3f(0., 0., 0.)
     );
     Box bx(
-        sf::Vector3f(150., 100., 100.),
-        sf::Vector3f(100., 80., 60.),
+        sf::Vector3f(100., 150., 100.),
+        sf::Vector3f(60., 100., 80.),
+        sf::Vector3f(0., 0., 0.)
+    );
+    Camera cam(
+        sf::Vector3f(-350., 0., 0.),
         sf::Vector3f(0., 0., 0.)
     );
     
@@ -151,10 +162,10 @@ int main() {
         float time = clock.getElapsedTime().asSeconds();
         shader.setUniform("u_time", time);
 
-        elp.setRot(sf::Vector3f(time, time, 0.));
+        elp.setRot(sf::Vector3f(0., time, time));
         elp.setInShader(&shader, "elp");
 
-        bx.setRot(sf::Vector3f(time, time, 0.));
+        bx.setRot(sf::Vector3f(0., time, time));
         bx.setInShader(&shader, "bx");
 
         window.clear(sf::Color(0, 100, 0, 255));

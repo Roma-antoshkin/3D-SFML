@@ -36,16 +36,14 @@ sf::Transform unRotateMatrix(sf::Vector3f r) {
     );
 }
 
-struct Elips {
-private:
-    sf::Vector3f rotvec;
+class Objekt3D {
+protected:
+    sf::Vector3f rotvec, coord;
     sf::Transform rot, unrot;
 public:
-    sf::Vector3f coord, mas;
-
-    Elips(): coord(), mas(1., 1., 1.), rotvec(), rot() {}
-    Elips(sf::Vector3f cd, sf::Vector3f ms, sf::Vector3f rt)
-        :coord(cd), mas(ms), rotvec(rt) {
+    Objekt3D(): coord(), rotvec(), rot() {}
+    Objekt3D(sf::Vector3f cd, sf::Vector3f rt)
+        :coord(cd), rotvec(rt) {
         rot = rotateMatrix(rt);
         unrot = unRotateMatrix(-rt);
     }
@@ -58,6 +56,21 @@ public:
     }
     
 
+    void setInShader(sf::Shader* shader, const string name) {
+        shader->setUniform(name+".coord", coord);
+        shader->setUniform(name+".rot", sf::Glsl::Mat3(rot));
+        shader->setUniform(name+".unrot", sf::Glsl::Mat3(unrot));
+    }
+};
+
+class SizedObjekt3D : public Objekt3D {
+protected:
+    sf::Vector3f mas;
+public:
+    SizedObjekt3D(): Objekt3D(), mas(1., 1., 1.) {}
+    SizedObjekt3D(sf::Vector3f cd, sf::Vector3f ms, sf::Vector3f rt)
+        :Objekt3D(cd, rt), mas(ms) {}
+    
     void setInShader(sf::Shader* shader, const string name) {
         shader->setUniform(name+".coord", coord);
         shader->setUniform(name+".mas", mas);
@@ -66,39 +79,31 @@ public:
     }
 };
 
-struct Box {
-private:
-    sf::Vector3f rotvec;
-    sf::Transform rot, unrot;
+class Elips : public SizedObjekt3D {
 public:
-    sf::Vector3f coord, mas;
+    Elips(): SizedObjekt3D() {}
+    Elips(sf::Vector3f cd, sf::Vector3f ms, sf::Vector3f rt)
+        :SizedObjekt3D(cd, ms, rt) {}
+};
 
-    Box(): coord(), mas(1., 1., 1.), rotvec(), rot() {}
+class Box: public SizedObjekt3D {
+public:
+    Box(): SizedObjekt3D() {}
     Box(sf::Vector3f cd, sf::Vector3f ms, sf::Vector3f rt)
-        :coord(cd), mas(ms), rotvec(rt) {
-        rot = rotateMatrix(rt);
-        unrot = unRotateMatrix(-rt);
-    }
-
-    sf::Vector3f getRot() { return rotvec; }
-    void setRot(sf::Vector3f rt) {
-        rotvec = rt;
-        rot = rotateMatrix(rt);
-        unrot = unRotateMatrix(-rt);
-    }
-    
-
-    void setInShader(sf::Shader* shader, const string name) {
-        shader->setUniform(name+".coord", coord);
-        shader->setUniform(name+".mas", mas);
-        shader->setUniform(name+".rot", sf::Glsl::Mat3(rot));
-        shader->setUniform(name+".unrot", sf::Glsl::Mat3(unrot));
-    }
+        :SizedObjekt3D(cd, ms, rt) {}
 };
 
 int main() {
+    int mouseX = WIDTH / 2;
+	int mouseY = HEIGHT / 2;
+	float mouseSensitivity = 3.0f;
+	float speed = 0.1f;
+	bool mouseHidden = false;
+
     sf::RenderWindow window(sf::VideoMode(WIDTH, HEIGHT), "Title");
     window.setFramerateLimit(60);
+    // window.setMouseCursorVisible(false);
+
     sf::Shader shader;
     sf::Clock clock;
 
@@ -132,7 +137,17 @@ int main() {
             if (event.type == sf::Event::Closed) {
                 window.close();
             }
+            else if (event.type == sf::Event::MouseMoved) {
+				if (mouseHidden) {
+					int mx = event.mouseMove.x - WIDTH / 2;
+					int my = event.mouseMove.y - HEIGHT / 2;
+					mouseX += mx;
+					mouseY += my;
+					sf::Mouse::setPosition(sf::Vector2i(WIDTH / 2, HEIGHT / 2), window);
+				}
+			}
         }
+        
         float time = clock.getElapsedTime().asSeconds();
         shader.setUniform("u_time", time);
 
@@ -141,7 +156,6 @@ int main() {
 
         bx.setRot(sf::Vector3f(time, time, 0.));
         bx.setInShader(&shader, "bx");
-
 
         window.clear(sf::Color(0, 100, 0, 255));
         window.draw(sprite, &shader);

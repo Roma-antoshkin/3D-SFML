@@ -3,15 +3,14 @@
 uniform vec2 u_resolution;
 uniform float u_time;
 // uniform vec3 light;
-// struct camera {
-//     vec3 coord;
-//     mat3 rot;
-//     mat3 unrot;
-// };
-// uniform camera cam;
+struct camera {
+    vec3 coord;
+    mat3 rot;
+    mat3 unrot;
+};
+uniform camera cam;
 // uniform sampler2D texture1;
 vec3 light = normalize(vec3(-1., 1., 1.));
-vec3 cam = vec3(-350.f, 0.f, 0.f);
 
 const float MAX_DIST = 10000.f;
 
@@ -101,10 +100,10 @@ void main() {
     // elp.mas = vec3(100, 100, 100);
     // elp.rot = vec3(0, 0, 0);
 
-    vec3 v = normalize(vec3(1., cd.x, cd.y/k));
+    vec3 v = cam.rot*normalize(vec3(1., cd.x, cd.y/k));
 
-    vec4 insElp = insecElips(cam, v, elp);
-    vec4 insBox = insecBox(cam, v, bx);
+    vec4 insElp = insecElips(cam.coord, v, elp);
+    vec4 insBox = insecBox(cam.coord, v, bx);
     vec4 ins = insElp.w < insBox.w ? insElp : insBox;
     if (ins.w < MAX_DIST) gl_FragColor = vec4(vec3(lightRef(v, ins.xyz)), 1.f);
     else gl_FragColor = vec4(0, 0, 0.1, 1);

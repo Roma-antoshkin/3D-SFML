@@ -2,5 +2,5 @@
 
 #pragma once
 
-constexpr float HEIGHT = 720.0;
-constexpr float WIDTH  = 1280.0;
+constexpr int HEIGHT = 720;
+constexpr int WIDTH  = 1280;

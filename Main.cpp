@@ -38,6 +38,7 @@ sf::Transform unRotateMatrix(sf::Vector3f r) {
 
 class Objekt3D {
 protected:
+    sf::Shader* shader;
     sf::Vector3f rotvec, coord;
     sf::Transform rot, unrot;
 public:
@@ -54,10 +55,20 @@ public:
         rot = rotateMatrix(rt);
         unrot = unRotateMatrix(-rt);
     }
-    
 
-    void setInShader(sf::Shader* shader, const string name) {
+    void bindShader(sf::Shader* shader) { this->shader = shader; }
+    
+    void setInShader(const string name) {
         shader->setUniform(name+".coord", coord);
+        shader->setUniform(name+".rot", sf::Glsl::Mat3(rot));
+        shader->setUniform(name+".unrot", sf::Glsl::Mat3(unrot));
+    }
+
+    void coordInShader(const string name) {
+        shader->setUniform(name+".coord", coord);
+    }
+
+    void rotInShader(const string name) {
         shader->setUniform(name+".rot", sf::Glsl::Mat3(rot));
         shader->setUniform(name+".unrot", sf::Glsl::Mat3(unrot));
     }
@@ -71,11 +82,15 @@ public:
     SizedObjekt3D(sf::Vector3f cd, sf::Vector3f ms, sf::Vector3f rt)
         :Objekt3D(cd, rt), mas(ms) {}
     
-    void setInShader(sf::Shader* shader, const string name) {
+    void setInShader(const string name) {
         shader->setUniform(name+".coord", coord);
         shader->setUniform(name+".mas", mas);
         shader->setUniform(name+".rot", sf::Glsl::Mat3(rot));
         shader->setUniform(name+".unrot", sf::Glsl::Mat3(unrot));
+    }
+
+    void masInShader(const string name) {
+        shader->setUniform(name+".mas", mas);
     }
 };
 
@@ -84,6 +99,32 @@ public:
     Camera(): Objekt3D() {}
     Camera(sf::Vector3f cd, sf::Vector3f rt)
         :Objekt3D(cd, rt) {}
+};
+
+class Light {
+protected:
+    sf::Shader* shader;
+public:
+    sf::Vector3f dir;
+    sf::Glsl::Vec4 col;
+
+    Light(): dir(), col() {};
+    Light(sf::Vector3f dr, sf::Glsl::Vec4 cl): dir(dr/sqrt(dr.x*dr.x + dr.y*dr.y + dr.z*dr.z)), col(cl) {}
+
+    void bindShader(sf::Shader* shader) { this->shader = shader; }
+
+    void setInShader(const string name) {
+        shader->setUniform(name+".dir", dir);
+        shader->setUniform(name+".col", col);
+    }
+
+    void dirInShader(const string name) {
+        shader->setUniform(name+".dir", dir);
+    }
+
+    void colInShader(const string name) {
+        shader->setUniform(name+".col", col);
+    }
 };
 
 class Elips : public SizedObjekt3D {
@@ -101,11 +142,11 @@ public:
 };
 
 int main() {
-    int mouseX = WIDTH / 2;
-	int mouseY = HEIGHT / 2;
+    int mouseX = 0;
+	int mouseY = 0;
 	float mouseSensitivity = 3.0f;
 	float speed = 0.1f;
-	bool mouseHidden = false;
+	bool mouseHidden = true;
 
     sf::RenderWindow window(sf::VideoMode(WIDTH, HEIGHT), "Title");
     window.setFramerateLimit(60);
@@ -117,7 +158,7 @@ int main() {
     if (!shader.loadFromFile("SphereShader.frag", sf::Shader::Fragment)) {
         // error...
     }
-    shader.setUniform("u_resolution", sf::Vector2(WIDTH, HEIGHT));
+    shader.setUniform("u_resolution", sf::Vector2f(WIDTH, HEIGHT));
 
     sf::Texture texture;
     texture.create(WIDTH, HEIGHT);
@@ -132,15 +173,23 @@ int main() {
         sf::Vector3f(80., 150., 100.),
         sf::Vector3f(0., 0., 0.)
     );
+    elp.bindShader(&shader);
     Box bx(
         sf::Vector3f(100., 150., 100.),
         sf::Vector3f(60., 100., 80.),
         sf::Vector3f(0., 0., 0.)
     );
+    bx.bindShader(&shader);
     Camera cam(
         sf::Vector3f(-350., 0., 0.),
         sf::Vector3f(0., 0., 0.)
     );
+    cam.bindShader(&shader);
+    // Light light(
+    //     sf::Vector3f(-1., 1., 1.),
+    //     sf::Glsl::Vec4(1., 1., 1., 1.)
+    // );
+    // light.bindShader(&shader);
     
     while (window.isOpen()) {
         sf::Event event;
@@ -154,7 +203,7 @@ int main() {
 					int my = event.mouseMove.y - HEIGHT / 2;
 					mouseX += mx;
 					mouseY += my;
-					sf::Mouse::setPosition(sf::Vector2i(WIDTH / 2, HEIGHT / 2), window);
+					// sf::Mouse::setPosition(sf::Vector2i(WIDTH / 2, HEIGHT / 2), window);
 				}
 			}
         }
@@ -163,10 +212,13 @@ int main() {
         shader.setUniform("u_time", time);
 
         elp.setRot(sf::Vector3f(0., time, time));
-        elp.setInShader(&shader, "elp");
+        elp.setInShader("elp");
 
         bx.setRot(sf::Vector3f(0., time, time));
-        bx.setInShader(&shader, "bx");
+        bx.setInShader("bx");
+
+        // cam.setRot(sf::Vector3f());
+        cam.setInShader("cam");
 
         window.clear(sf::Color(0, 100, 0, 255));
         window.draw(sprite, &shader);

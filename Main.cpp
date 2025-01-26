@@ -142,11 +142,13 @@ public:
 };
 
 int main() {
-    int mouseX = 0;
-	int mouseY = 0;
-	float mouseSensitivity = 3.0f;
+    sf::Vector3f camPos(0., 0., 0.);
+    float mouseX = 0;
+	float mouseY = 0;
+	float sens = 3.f/1000;
 	float speed = 0.1f;
-	bool mouseHidden = true;
+	bool mouseHidden = false;
+    bool wasdUD[6] = { false, false, false, false, false, false };
 
     sf::RenderWindow window(sf::VideoMode(WIDTH, HEIGHT), "Title");
     window.setFramerateLimit(60);
@@ -201,11 +203,41 @@ int main() {
 				if (mouseHidden) {
 					int mx = event.mouseMove.x - WIDTH / 2;
 					int my = event.mouseMove.y - HEIGHT / 2;
-					mouseX += mx;
-					mouseY += my;
+					mouseX += mx*sens;
+					mouseY += my*sens;
+                    mouseY = max(min(mouseY, 3.14f/2), -3.14f/2);
 					// sf::Mouse::setPosition(sf::Vector2i(WIDTH / 2, HEIGHT / 2), window);
 				}
 			}
+            else if (event.type == sf::Event::MouseButtonPressed) {
+				window.setMouseCursorVisible(false);
+				mouseHidden = true;
+			}
+            else if (event.type == sf::Event::KeyPressed) {
+				if (event.key.code == sf::Keyboard::Escape) {
+					window.setMouseCursorVisible(true);
+					mouseHidden = false;
+				}
+                else if (event.key.code == sf::Keyboard::W) wasdUD[0] = true;
+				else if (event.key.code == sf::Keyboard::A) wasdUD[1] = true;
+				else if (event.key.code == sf::Keyboard::S) wasdUD[2] = true;
+				else if (event.key.code == sf::Keyboard::D) wasdUD[3] = true;
+				else if (event.key.code == sf::Keyboard::Space) wasdUD[4] = true;
+				else if (event.key.code == sf::Keyboard::LShift) wasdUD[5] = true;
+			}
+            else if (event.type == sf::Event::KeyReleased)
+			{
+				if (event.key.code == sf::Keyboard::W) wasdUD[0] = false;
+				else if (event.key.code == sf::Keyboard::A) wasdUD[1] = false;
+				else if (event.key.code == sf::Keyboard::S) wasdUD[2] = false;
+				else if (event.key.code == sf::Keyboard::D) wasdUD[3] = false;
+				else if (event.key.code == sf::Keyboard::Space) wasdUD[4] = false;
+				else if (event.key.code == sf::Keyboard::LShift) wasdUD[5] = false;
+			}
+        }
+
+        if (mouseHidden) {
+            sf::Mouse::setPosition(sf::Vector2i(WIDTH / 2, HEIGHT / 2), window);
         }
         
         float time = clock.getElapsedTime().asSeconds();
@@ -217,7 +249,7 @@ int main() {
         bx.setRot(sf::Vector3f(0., time, time));
         bx.setInShader("bx");
 
-        // cam.setRot(sf::Vector3f());
+        cam.setRot(sf::Vector3f(0., mouseY, mouseX));
         cam.setInShader("cam");
 
         window.clear(sf::Color(0, 100, 0, 255));

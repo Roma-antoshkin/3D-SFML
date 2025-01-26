@@ -58,7 +58,7 @@ vec4 insecElips(vec3 m, vec3 v, elips elp) {
 
     m /= elp.mas;
     v = normalize(v/elp.mas);
-    float h = dot(-m, v);
+    float h = abs(dot(-m, v));
     float d = mod(m + h*v);
     if (d > 1.) return vec4(0, 0, 0, MAX_DIST + 1.f); 
     float s = sqrt(1 - d*d);

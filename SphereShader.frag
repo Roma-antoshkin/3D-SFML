@@ -10,7 +10,7 @@ struct camera {
 };
 uniform camera cam;
 // uniform sampler2D texture1;
-vec3 light = normalize(vec3(-1., 1., 1.));
+vec3 light = normalize(vec3(1., 1., 1.));
 
 const float MAX_DIST = 10000.f;
 
@@ -100,7 +100,7 @@ void main() {
     // elp.mas = vec3(100, 100, 100);
     // elp.rot = vec3(0, 0, 0);
 
-    vec3 v = cam.rot*normalize(vec3(1., cd.x, cd.y/k));
+    vec3 v = cam.rot*normalize(vec3(-1., cd.x, cd.y/k));
 
     vec4 insElp = insecElips(cam.coord, v, elp);
     vec4 insBox = insecBox(cam.coord, v, bx);

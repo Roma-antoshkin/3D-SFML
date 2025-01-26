@@ -4,7 +4,7 @@ using namespace std;
 
 #include "Constants.h"
 
-sf::Transform rotateMatrix(sf::Vector3f r) {
+sf::Transform unRotateMatrix(sf::Vector3f r) {
     return sf::Transform(
         1.f, 0.f, 0.f, 
         0.f, cos(r.x), -sin(r.x),
@@ -20,7 +20,7 @@ sf::Transform rotateMatrix(sf::Vector3f r) {
     );
 }
 
-sf::Transform unRotateMatrix(sf::Vector3f r) {
+sf::Transform rotateMatrix(sf::Vector3f r) {
     return sf::Transform(
         cos(r.z), -sin(r.z), 0.f,
         sin(r.z), cos(r.z), 0.f,
@@ -39,9 +39,11 @@ sf::Transform unRotateMatrix(sf::Vector3f r) {
 class Objekt3D {
 protected:
     sf::Shader* shader;
-    sf::Vector3f rotvec, coord;
+    sf::Vector3f rotvec;
     sf::Transform rot, unrot;
 public:
+    sf::Vector3f coord;
+
     Objekt3D(): coord(), rotvec(), rot() {}
     Objekt3D(sf::Vector3f cd, sf::Vector3f rt)
         :coord(cd), rotvec(rt) {
@@ -146,7 +148,7 @@ int main() {
     float mouseX = 0;
 	float mouseY = 0;
 	float sens = 3.f/1000;
-	float speed = 0.1f;
+	float speed = 300.f;
 	bool mouseHidden = false;
     bool wasdUD[6] = { false, false, false, false, false, false };
 
@@ -177,13 +179,13 @@ int main() {
     );
     elp.bindShader(&shader);
     Box bx(
-        sf::Vector3f(100., 150., 100.),
+        sf::Vector3f(-100., 150., 100.),
         sf::Vector3f(60., 100., 80.),
         sf::Vector3f(0., 0., 0.)
     );
     bx.bindShader(&shader);
     Camera cam(
-        sf::Vector3f(-350., 0., 0.),
+        sf::Vector3f(350., 0., 0.),
         sf::Vector3f(0., 0., 0.)
     );
     cam.bindShader(&shader);
@@ -192,9 +194,10 @@ int main() {
     //     sf::Glsl::Vec4(1., 1., 1., 1.)
     // );
     // light.bindShader(&shader);
-    
+    float curTime = clock.getElapsedTime().asSeconds();
     while (window.isOpen()) {
         sf::Event event;
+        float time = clock.getElapsedTime().asSeconds();
         while (window.pollEvent(event)) {
             if (event.type == sf::Event::Closed) {
                 window.close();
@@ -203,8 +206,8 @@ int main() {
 				if (mouseHidden) {
 					int mx = event.mouseMove.x - WIDTH / 2;
 					int my = event.mouseMove.y - HEIGHT / 2;
-					mouseX += mx*sens;
-					mouseY += my*sens;
+					mouseX -= mx*sens;
+					mouseY -= my*sens;
                     mouseY = max(min(mouseY, 3.14f/2), -3.14f/2);
 					// sf::Mouse::setPosition(sf::Vector2i(WIDTH / 2, HEIGHT / 2), window);
 				}
@@ -238,12 +241,27 @@ int main() {
 
         if (mouseHidden) {
             sf::Mouse::setPosition(sf::Vector2i(WIDTH / 2, HEIGHT / 2), window);
+
+            sf::Vector3f dir = sf::Vector3f(0.0f, 0.0f, 0.0f);
+			sf::Vector3f dirTemp;
+			if (wasdUD[0]) dir = sf::Vector3f(-1.0f, 0.0f, 0.0f);
+			else if (wasdUD[2]) dir = sf::Vector3f(1.0f, 0.0f, 0.0f);
+			if (wasdUD[1]) dir += sf::Vector3f(0.0f, -1.0f, 0.0f);
+			else if (wasdUD[3]) dir += sf::Vector3f(0.0f, 1.0f, 0.0f);
+            if (wasdUD[4]) dir += sf::Vector3f(0.0f, 0.0f, 1.0f);
+			else if (wasdUD[5]) dir += sf::Vector3f(0.0f, 0.0f, -1.0f);
+
+            dirTemp.x = dir.x*cos(mouseX) - dir.y*sin(mouseX);
+            dirTemp.y = dir.x*sin(mouseX) + dir.y*cos(mouseX);
+            dirTemp.z = dir.z;
+            cam.coord += dirTemp*speed*(time - curTime);
         }
+
+        curTime = time;
         
-        float time = clock.getElapsedTime().asSeconds();
         shader.setUniform("u_time", time);
 
-        elp.setRot(sf::Vector3f(0., time, time));
+        elp.setRot(sf::Vector3f(-time, 0., -time));
         elp.setInShader("elp");
 
         bx.setRot(sf::Vector3f(0., time, time));

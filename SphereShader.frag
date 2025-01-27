@@ -29,6 +29,7 @@ struct box {
     mat3 unrot;
 };
 uniform box bx;
+uniform vec4 plane;
 
 // mat3 rotateMatrix(vec3 r) {
 //     mat3(
@@ -87,8 +88,25 @@ vec4 insecBox(vec3 m, vec3 v, box bx) {
 	return vec4(bx.rot*(-sign(v) * step(t1.yzx, t1.xyz) * step(t1.zxy, t1.xyz)), mod(v*tN*bx.mas));
 }
 
+vec4 insecPlane(vec3 m, vec3 v, vec4 pl) {
+    float r = dot(vec4(m, 1.), pl);
+    float d = -r/dot(v, pl.xyz);
+    pl.w = d < 0 ? MAX_DIST + 1 : d; // Доработать
+    return pl;
+}
+
 float lightRef(vec3 v, vec3 n) {
     return pow(max(dot(reflect(v, n), light), 0.f), 6)*0.5 + max(dot(n, light), 0.)*0.5;
+}
+
+void castRay(vec3 v) {
+    vec4 insPlane = insecPlane(cam.coord, v, plane);
+    vec4 insElp = insecElips(cam.coord, v, elp);
+    vec4 insBox = insecBox(cam.coord, v, bx);
+    vec4 ins = insElp.w < insBox.w ? insElp : insBox;
+    ins = ins.w < insPlane.w ? ins : insPlane;
+    if (ins.w < MAX_DIST) gl_FragColor = vec4(vec3(lightRef(v, ins.xyz)), 1.f);
+    else gl_FragColor = vec4(0, 0, 0.1, 1);
 }
 
 void main() {
@@ -102,9 +120,5 @@ void main() {
 
     vec3 v = cam.rot*normalize(vec3(-1., cd.x, cd.y/k));
 
-    vec4 insElp = insecElips(cam.coord, v, elp);
-    vec4 insBox = insecBox(cam.coord, v, bx);
-    vec4 ins = insElp.w < insBox.w ? insElp : insBox;
-    if (ins.w < MAX_DIST) gl_FragColor = vec4(vec3(lightRef(v, ins.xyz)), 1.f);
-    else gl_FragColor = vec4(0, 0, 0.1, 1);
+    castRay(v);
 }

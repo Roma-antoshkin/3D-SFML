@@ -36,9 +36,27 @@ sf::Transform rotateMatrix(sf::Vector3f r) {
     );
 }
 
-class Objekt3D {
+inline float dot(sf::Vector3f& a, sf::Vector3f& b) {
+    return a.x*b.x + a.y*b.y + a.z*b.z;
+}
+
+inline float mod(sf::Vector3f& v) {
+    return sqrt(v.x*v.x + v.y*v.y + v.z*v.z);
+}
+
+inline sf::Vector3f normalize(sf::Vector3f& v) {
+    return v/mod(v);
+}
+
+class Shaded {
 protected:
     sf::Shader* shader;
+public:
+    void bindShader(sf::Shader* shader) { this->shader = shader; }
+};
+
+class Objekt3D : public Shaded {
+protected:
     sf::Vector3f rotvec;
     sf::Transform rot, unrot;
 public:
@@ -57,8 +75,6 @@ public:
         rot = rotateMatrix(rt);
         unrot = unRotateMatrix(-rt);
     }
-
-    void bindShader(sf::Shader* shader) { this->shader = shader; }
     
     void setInShader(const string name) {
         shader->setUniform(name+".coord", coord);
@@ -143,11 +159,30 @@ public:
         :SizedObjekt3D(cd, ms, rt) {}
 };
 
+class Plane : public Shaded{
+protected:
+    sf::Vector3f norm;
+public:
+    sf::Vector3f coord;
+
+    Plane(): coord(), norm(0., 0., 1.) {}
+    Plane(sf::Vector3f cd, sf::Vector3f nm)
+        :coord(cd), norm(normalize(nm)) {}
+    
+    sf::Vector3f getNorm() { return norm; }
+    void setNorm(sf::Vector3f& nm) {
+        norm = normalize(nm);
+    }
+    void setInShader(const string name) {
+        shader->setUniform(name, sf::Glsl::Vec4(norm.x, norm.y, norm.z, -dot(coord, norm)));
+    }
+};
+
 int main() {
     sf::Vector3f camPos(0., 0., 0.);
     float mouseX = 0;
 	float mouseY = 0;
-	float sens = 3.f/1000;
+	float sens = 2.f/1000;
 	float speed = 300.f;
 	bool mouseHidden = false;
     bool wasdUD[6] = { false, false, false, false, false, false };
@@ -189,6 +224,12 @@ int main() {
         sf::Vector3f(0., 0., 0.)
     );
     cam.bindShader(&shader);
+    Plane plane(
+        sf::Vector3f(0., 0., -200),
+        sf::Vector3f(0., 0., 1.)
+    );
+    plane.bindShader(&shader);
+    plane.setInShader("plane");
     // Light light(
     //     sf::Vector3f(-1., 1., 1.),
     //     sf::Glsl::Vec4(1., 1., 1., 1.)

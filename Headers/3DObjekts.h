@@ -103,10 +103,8 @@ public:
         :Objekt3D(cd, rt), mas(ms), color(col) {}
     
     void setInShader(const std::string name) {
-        shader->setUniform(name+".coord", coord);
+        Objekt3D::setInShader(name);
         shader->setUniform(name+".mas", mas);
-        shader->setUniform(name+".rot", sf::Glsl::Mat3(rot));
-        shader->setUniform(name+".unrot", sf::Glsl::Mat3(unrot));
         shader->setUniform(name+".color", color);
     }
 

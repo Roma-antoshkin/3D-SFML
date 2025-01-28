@@ -55,7 +55,8 @@ int main() {
     cam.bindShader(&shader);
     Plane plane(
         sf::Vector3f(0., 0., -200),
-        sf::Vector3f(0., 0., 1.)
+        sf::Vector3f(0., 0., 1.),
+        sf::Glsl::Vec4(.5, .5, .5, 1.)
     );
     plane.bindShader(&shader);
     plane.setInShader("pln");

@@ -11,9 +11,10 @@ struct camera {
 uniform camera cam;
 // uniform sampler2D texture1;
 vec3 light = normalize(vec3(1., 1., 1.));
-vec3 lightCol = vec3(1., 1., 1.);
+vec3 lightCol = vec3(0.95, 0.92, 0.8);
 
-vec4 skycol = vec4(0.0, 0.01, .1, 1.0);
+vec3 skycol = vec3(115./255., 186./255, 255./255);
+vec3 shadCol = vec3(0.05, 0.08, 0.1);
 
 const float MAX_DIST = 10000.f;
 
@@ -38,6 +39,10 @@ struct plane {
     vec4 coord, color;
 };
 uniform plane pln;
+
+vec4 insPlane;
+vec4 insElp;
+vec4 insBox;
 
 float mod(vec3 v) {
     return sqrt(dot(v, v));
@@ -87,33 +92,52 @@ vec4 insecPlane(vec3 m, vec3 v, plane pl) {
     return pl.coord;
 }
 
+float sunning(vec3 v) {
+    return pow(max(dot(reflect(v, light), -light), 0.f), 32)*0.5;
+}
+
 float lightRef(vec3 v, vec3 n) {
     return pow(max(dot(reflect(v, n), light), 0.f), 6)*0.5 + max(dot(n, light), 0.)*0.5;
 }
 
-void castRay(vec3 v) {
-    vec4 col = vec4(1., 1., 1., 1.);
+float shading(vec3 v, vec3 m, vec4 ins) {
+    vec3 pos = v*ins.w + m;
+    vec4 Pln = insecPlane(pos, light, pln);
+    vec4 Elp = insecElips(pos, light, elp);
+    vec4 Box = insecBox(pos, light, bx);
+    if (ins.w < insPlane.w && Pln.w < MAX_DIST ||
+        ins.w < insElp.w && Elp.w < MAX_DIST ||
+        ins.w < insBox.w && Box.w < MAX_DIST) return 0.*lightRef(v, ins.xyz);
+    return lightRef(v, ins.xyz);
+}
+
+vec3 castRay(vec3 v) {
+    vec3 col = vec3(1., 1., 1.);
     vec4 ins = vec4(0., 0., 0., MAX_DIST + 1);
-    vec4 insPlane = insecPlane(cam.coord, v, pln);
-    vec4 insElp = insecElips(cam.coord, v, elp);
-    vec4 insBox = insecBox(cam.coord, v, bx);
+    insPlane = insecPlane(cam.coord, v, pln);
+    insElp = insecElips(cam.coord, v, elp);
+    insBox = insecBox(cam.coord, v, bx);
     if(insElp.w < insBox.w) {
         ins = insElp;
-        col = elp.color;
+        col = elp.color.rgb;
     }
     else {
         ins = insBox;
-        col = bx.color;
+        col = bx.color.rgb;
     }
     if (ins.w > insPlane.w) {
         ins = insPlane;
-        col = pln.color;
+        col = pln.color.rgb;
     }
+
+    float mult = shading(v, cam.coord, ins);
+    
+    if (ins.w < MAX_DIST) col = col.rgb*(mult*lightCol + shadCol);
+    else col = skycol + sunning(v)*lightCol;
     col.x = pow(col.x, 0.45);
     col.y = pow(col.y, 0.45);
     col.z = pow(col.z, 0.45);
-    if (ins.w < MAX_DIST) gl_FragColor = vec4(lightRef(v, ins.xyz)*col.xyz, col.w);
-    else gl_FragColor = skycol;
+    return col;
 }
 
 void main() {
@@ -122,5 +146,5 @@ void main() {
 
     vec3 v = cam.rot*normalize(vec3(-1., cd.x, cd.y/k));
 
-    castRay(v);
+    gl_FragColor = vec4(vec3(castRay(v)), 1.);
 }

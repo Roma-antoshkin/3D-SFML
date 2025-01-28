@@ -11,6 +11,9 @@ struct camera {
 uniform camera cam;
 // uniform sampler2D texture1;
 vec3 light = normalize(vec3(1., 1., 1.));
+vec3 lightCol = vec3(1., 1., 1.);
+
+vec4 skycol = vec4(0.0, 0.01, .1, 1.0);
 
 const float MAX_DIST = 10000.f;
 
@@ -89,23 +92,33 @@ float lightRef(vec3 v, vec3 n) {
 }
 
 void castRay(vec3 v) {
+    vec4 col = vec4(1., 1., 1., 1.);
+    vec4 ins = vec4(0., 0., 0., MAX_DIST + 1);
     vec4 insPlane = insecPlane(cam.coord, v, pln);
     vec4 insElp = insecElips(cam.coord, v, elp);
     vec4 insBox = insecBox(cam.coord, v, bx);
-    vec4 ins = insElp.w < insBox.w ? insElp : insBox;
-    ins = ins.w < insPlane.w ? ins : insPlane;
-    if (ins.w < MAX_DIST) gl_FragColor = vec4(vec3(lightRef(v, ins.xyz)), 1.f);
-    else gl_FragColor = vec4(0, 0, 0.1, 1);
+    if(insElp.w < insBox.w) {
+        ins = insElp;
+        col = elp.color;
+    }
+    else {
+        ins = insBox;
+        col = bx.color;
+    }
+    if (ins.w > insPlane.w) {
+        ins = insPlane;
+        col = pln.color;
+    }
+    col.x = pow(col.x, 0.45);
+    col.y = pow(col.y, 0.45);
+    col.z = pow(col.z, 0.45);
+    if (ins.w < MAX_DIST) gl_FragColor = vec4(lightRef(v, ins.xyz)*col.xyz, col.w);
+    else gl_FragColor = skycol;
 }
 
 void main() {
     vec2 cd = (gl_FragCoord.xy*2.f / u_resolution) - vec2(1.f, 1.f);
     float k = u_resolution.x / u_resolution.y;
-
-    // elips elp;
-    // elp.coord = vec3(0, 0, 0);
-    // elp.mas = vec3(100, 100, 100);
-    // elp.rot = vec3(0, 0, 0);
 
     vec3 v = cam.rot*normalize(vec3(-1., cd.x, cd.y/k));
 

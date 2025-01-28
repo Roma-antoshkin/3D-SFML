@@ -37,13 +37,15 @@ int main() {
     Elips elp(
         sf::Vector3f(0., 0., 0.),
         sf::Vector3f(80., 150., 100.),
-        sf::Vector3f(0., 0., 0.)
+        sf::Vector3f(0., 0., 0.),
+        sf::Glsl::Vec4(1., 0.5, 0., 1.)
     );
     elp.bindShader(&shader);
     Box bx(
         sf::Vector3f(-100., 150., 100.),
         sf::Vector3f(60., 100., 80.),
-        sf::Vector3f(0., 0., 0.)
+        sf::Vector3f(0., 0., 0.),
+        sf::Glsl::Vec4(0., 0.75, 1., 1.)
     );
     bx.bindShader(&shader);
     Camera cam(

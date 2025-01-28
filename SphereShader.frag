@@ -19,6 +19,7 @@ struct elips {
     vec3 mas;
     mat3 rot;
     mat3 unrot;
+    vec4 color;
 };
 uniform elips elp;
 
@@ -27,25 +28,13 @@ struct box {
     vec3 mas;
     mat3 rot;
     mat3 unrot;
+    vec4 color;
 };
 uniform box bx;
-uniform vec4 plane;
-
-// mat3 rotateMatrix(vec3 r) {
-//     mat3(
-//         1.f, 0.f, 0.f, 
-//         0.f, cos(r.x), -sin(r.x),
-//         0.f, sin(r.x), cos(r.x)
-//     ) * mat3(
-//         cos(r.y), 0.f, sin(r.y),
-//         0.f, 1.f, 0.f,
-//         -sin(r.y), 0, cos(r.y)
-//     ) * return mat3(
-//         cos(r.z), -sin(r.z), 0.f,
-//         sin(r.z), cos(r.z), 0.f,
-//         0.f, 0.f, 1.f
-//     );
-// }
+struct plane {
+    vec4 coord, color;
+};
+uniform plane pln;
 
 float mod(vec3 v) {
     return sqrt(dot(v, v));
@@ -88,11 +77,11 @@ vec4 insecBox(vec3 m, vec3 v, box bx) {
 	return vec4(bx.rot*(-sign(v) * step(t1.yzx, t1.xyz) * step(t1.zxy, t1.xyz)), mod(v*tN*bx.mas));
 }
 
-vec4 insecPlane(vec3 m, vec3 v, vec4 pl) {
-    float r = dot(vec4(m, 1.), pl);
-    float d = -r/dot(v, pl.xyz);
-    pl.w = d < 0 ? MAX_DIST + 1 : d; // Доработать
-    return pl;
+vec4 insecPlane(vec3 m, vec3 v, plane pl) {
+    float r = dot(vec4(m, 1.), pl.coord);
+    float d = -r/dot(v, pl.coord.xyz);
+    pl.coord.w = d < 0 ? MAX_DIST + 1 : d;
+    return pl.coord;
 }
 
 float lightRef(vec3 v, vec3 n) {
@@ -100,7 +89,7 @@ float lightRef(vec3 v, vec3 n) {
 }
 
 void castRay(vec3 v) {
-    vec4 insPlane = insecPlane(cam.coord, v, plane);
+    vec4 insPlane = insecPlane(cam.coord, v, pln);
     vec4 insElp = insecElips(cam.coord, v, elp);
     vec4 insBox = insecBox(cam.coord, v, bx);
     vec4 ins = insElp.w < insBox.w ? insElp : insBox;

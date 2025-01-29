@@ -1,5 +1,8 @@
 #version 330 core
 
+const float MAX_DIST = 10000.f;
+const float PI = acos(-1.);
+
 uniform vec2 u_resolution;
 uniform float u_time;
 // uniform vec3 light;
@@ -9,14 +12,15 @@ struct camera {
     mat3 unrot;
 };
 uniform camera cam;
-// uniform sampler2D texture1;
-vec3 light = normalize(vec3(1., 1., 1.));
+uniform sampler2D skybox;
+const float a = PI + PI/6;
+uniform mat2 rotsky = mat2(cos(a), -sin(a), sin(a), cos(a));
+
+vec3 light = normalize(vec3(1., 1., 1.8));
 vec3 lightCol = vec3(0.95, 0.92, 0.8);
 
 vec3 skycol = vec3(115./255., 186./255, 255./255);
 vec3 shadCol = vec3(0.05, 0.08, 0.1);
-
-const float MAX_DIST = 10000.f;
 
 struct elips {
     vec3 coord;
@@ -93,7 +97,7 @@ vec4 insecPlane(vec3 m, vec3 v, plane pl) {
 }
 
 float sunning(vec3 v) {
-    return pow(max(dot(reflect(v, light), -light), 0.f), 32)*0.5;
+    return pow(max(dot(reflect(v, light), -light), 0.f), 16)*0.4;
 }
 
 float lightRef(vec3 v, vec3 n) {
@@ -109,6 +113,16 @@ float shading(vec3 v, vec3 m, vec4 ins) {
         ins.w < insElp.w && Elp.w < MAX_DIST ||
         ins.w < insBox.w && Box.w < MAX_DIST) return 0.*lightRef(v, ins.xyz);
     return lightRef(v, ins.xyz);
+}
+
+vec3 getSky(vec3 v) {
+    // return skycol + sunning(v)*lightCol;
+    vec3 vec = vec3(rotsky*vec2(normalize(v.xy)), v.z);
+    vec2 skycoord = vec2(
+        (asin(vec.x)/(PI*2) - 0.25)*sign(vec.y) + 0.5,
+        asin(-vec.z)/PI + 0.5
+    );
+    return vec3(texture2D(skybox, skycoord)) + sunning(v)*lightCol;
 }
 
 vec3 castRay(vec3 v) {
@@ -133,7 +147,7 @@ vec3 castRay(vec3 v) {
     float mult = shading(v, cam.coord, ins);
     
     if (ins.w < MAX_DIST) col = col.rgb*(mult*lightCol + shadCol);
-    else col = skycol + sunning(v)*lightCol;
+    else col = getSky(v);
     col.x = pow(col.x, 0.45);
     col.y = pow(col.y, 0.45);
     col.z = pow(col.z, 0.45);

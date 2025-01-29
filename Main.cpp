@@ -31,9 +31,9 @@ int main() {
 
     sf::Sprite sprite(texture);
 
-    // sf::Texture city;
-    // city.loadFromFile("image.png");
-    // shader.setUniform("texture1", city);
+    sf::Texture skybox;
+    skybox.loadFromFile("img/skybox.jpg");
+    shader.setUniform("skybox", skybox);
     Elips elp(
         sf::Vector3f(0., 0., 0.),
         sf::Vector3f(80., 150., 100.),
@@ -42,7 +42,7 @@ int main() {
     );
     elp.bindShader(&shader);
     Box bx(
-        sf::Vector3f(-100., 150., 100.),
+        sf::Vector3f(0., 150., 200.),
         sf::Vector3f(60., 100., 80.),
         sf::Vector3f(0., 0., 0.),
         sf::Glsl::Vec4(0., 0.75, 1., 1.)

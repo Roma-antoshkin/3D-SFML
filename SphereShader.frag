@@ -2,9 +2,11 @@
 
 const float MAX_DIST = 10000.f;
 const float PI = acos(-1.);
+const float gamma = 2.2;
 
 uniform vec2 u_resolution;
 uniform float u_time;
+uniform float fov;
 // uniform vec3 light;
 struct camera {
     vec3 coord;
@@ -16,7 +18,7 @@ uniform sampler2D skybox;
 const float a = PI + PI/6;
 uniform mat2 rotsky = mat2(cos(a), -sin(a), sin(a), cos(a));
 
-vec3 light = normalize(vec3(1., 1., 1.8));
+vec3 light = normalize(vec3(1., 1., 1.7));
 vec3 lightCol = vec3(0.95, 0.92, 0.8);
 
 vec3 skycol = vec3(115./255., 186./255, 255./255);
@@ -97,7 +99,7 @@ vec4 insecPlane(vec3 m, vec3 v, plane pl) {
 }
 
 float sunning(vec3 v) {
-    return pow(max(dot(reflect(v, light), -light), 0.f), 16)*0.4;
+    return pow(max(dot(reflect(v, light), -light), 0.f), 16)*0.7;
 }
 
 float lightRef(vec3 v, vec3 n) {
@@ -122,7 +124,7 @@ vec3 getSky(vec3 v) {
         (asin(vec.x)/(PI*2) - 0.25)*sign(vec.y) + 0.5,
         asin(-vec.z)/PI + 0.5
     );
-    return vec3(texture2D(skybox, skycoord)) + sunning(v)*lightCol;
+    return pow(vec3(texture2D(skybox, skycoord)), vec3(gamma)) + sunning(v)*lightCol;
 }
 
 vec3 castRay(vec3 v) {
@@ -148,9 +150,7 @@ vec3 castRay(vec3 v) {
     
     if (ins.w < MAX_DIST) col = col.rgb*(mult*lightCol + shadCol);
     else col = getSky(v);
-    col.x = pow(col.x, 0.45);
-    col.y = pow(col.y, 0.45);
-    col.z = pow(col.z, 0.45);
+    col = pow(col, vec3(1./gamma));
     return col;
 }
 
@@ -158,6 +158,7 @@ void main() {
     vec2 cd = (gl_FragCoord.xy*2.f / u_resolution) - vec2(1.f, 1.f);
     float k = u_resolution.x / u_resolution.y;
 
+    cd *= fov;
     vec3 v = cam.rot*normalize(vec3(-1., cd.x, cd.y/k));
 
     gl_FragColor = vec4(vec3(castRay(v)), 1.);

@@ -6,13 +6,16 @@ using namespace std;
 #include "Constants.h"
 
 int main() {
-    sf::Vector3f camPos(0., 0., 0.);
     float mouseX = 0;
 	float mouseY = 0;
 	float sens = 2.f/1000;
 	float speed = 300.f;
 	bool mouseHidden = false;
     bool wasdUD[6] = { false, false, false, false, false, false };
+    float fov = 1.;
+    float scrollSens = 1.1;
+    const float maxFov = fov*2;
+    const float maxSens = sens*2;
 
     sf::RenderWindow window(sf::VideoMode(WIDTH, HEIGHT), "Title");
     window.setFramerateLimit(60);
@@ -25,6 +28,7 @@ int main() {
         // error...
     }
     shader.setUniform("u_resolution", sf::Vector2f(WIDTH, HEIGHT));
+    shader.setUniform("fov", fov);
 
     sf::Texture texture;
     texture.create(WIDTH, HEIGHT);
@@ -86,6 +90,13 @@ int main() {
             else if (event.type == sf::Event::MouseButtonPressed) {
 				window.setMouseCursorVisible(false);
 				mouseHidden = true;
+			}
+            else if (event.type == sf::Event::MouseWheelScrolled) {
+                if(mouseHidden) {
+                    fov = min(fov*pow(scrollSens, -event.mouseWheelScroll.delta), maxFov);
+                    sens = min(sens*pow(scrollSens, -event.mouseWheelScroll.delta), maxSens);
+                    shader.setUniform("fov", fov);
+                }
 			}
             else if (event.type == sf::Event::KeyPressed) {
 				if (event.key.code == sf::Keyboard::Escape) {

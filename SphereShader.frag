@@ -95,6 +95,7 @@ vec4 insecPlane(vec3 m, vec3 v, plane pl) {
     float r = dot(vec4(m, 1.), pl.coord);
     float d = -r/dot(v, pl.coord.xyz);
     pl.coord.w = d < 0 ? MAX_DIST + 1 : d;
+    pl.coord.xyz *= sign(r);
     return pl.coord;
 }
 
